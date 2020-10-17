@@ -1,5 +1,9 @@
 import pyxel
 
+SCENE_TITLE = 0
+SCENE_PLAY = 1
+SCENE_GAMEOVER = 2
+
 bullets = []
 blocks = []
 
@@ -10,11 +14,29 @@ class Game:
 
     def __init__(self):
         pyxel.init(self.WIDTH, self.HEIGHT, caption="Retro Game")  # The game screen will be 160x120 pixels
+        self.scene = SCENE_TITLE
         self.player = None
         self.ended = False
         self.did_win = False
         self.new_game()
         pyxel.run(self.update, self.draw)  # Run the game
+
+    def update(self):
+        if pyxel.btnp(pyxel.KEY_Q):
+            pyxel.quit()
+
+        # self.background.update()
+
+        if self.scene == SCENE_TITLE:
+            self.update_title_scene()
+        elif self.scene == SCENE_PLAY:
+            self.update_play_scene()
+        # elif self.scene == SCENE_GAMEOVER:
+        #     self.update_gameover_scene()
+
+    def update_title_scene(self):
+        if pyxel.btnp(pyxel.KEY_ENTER):
+            self.scene = SCENE_PLAY
 
     def new_game(self):  # Creates a new game
         self.player = Player()
@@ -25,7 +47,7 @@ class Game:
         for x in range(0, self.WIDTH, Block.WIDTH * 2):  # The blocks are placed 1 block width apart
             blocks.append(Block(x, 1))
 
-    def update(self):
+    def update_play_scene(self):
         if self.ended:  # If the game is over, nothing should be able to move
             if pyxel.btn(pyxel.KEY_ENTER):
                 self.new_game()
@@ -38,6 +60,23 @@ class Game:
             b.update(self)
 
     def draw(self):
+        pyxel.cls(0)
+
+        # self.background.draw()
+
+        if self.scene == SCENE_TITLE:
+            self.draw_title_scene()
+        elif self.scene == SCENE_PLAY:
+            self.draw_play_scene()
+        # elif self.scene == SCENE_GAMEOVER:
+        #     self.draw_gameover_scene()
+
+    def draw_title_scene(self):
+        pyxel.text(10, 10, "KAREN Simulator: 2020 Edition", pyxel.frame_count % 16)
+        pyxel.text(10, 20, "A Pyxel Shooter", pyxel.frame_count % 16)
+        pyxel.text(10, 30, "- PRESS ENTER -", 13)
+
+    def draw_play_scene(self):
         pyxel.cls(pyxel.COLOR_BLACK)  # Make the background black
         self.player.draw()  # Draw the player
         for b in blocks:  # Draw the blocks
