@@ -7,13 +7,15 @@ SCENE_PLAY = 1
 
 BLOCK_SPEED = 1.0
 bulletDirection = 0
+playerX = 0
+playerY = 0
 
 bullets = []
 blocks = []
 
 
 class Game:
-    # how big it is
+    # game dimensions
     WIDTH = 160
     HEIGHT = 120
 
@@ -23,6 +25,7 @@ class Game:
         self.player = None
         self.ended = False
         self.did_win = False
+        self.score = 0
         self.new_game()
         pyxel.run(self.update, self.draw)  # Run the game
 
@@ -46,7 +49,7 @@ class Game:
     def new_game(self):  # Creates a new game
         self.player = Player()
         self.ended = False
-
+        self.score = 0
         bullets.clear()  # Remove any bullets that have been left behind
         blocks.clear()  # Remove any blocks that have been left behind
         for x in range(0, self.WIDTH, Block.WIDTH * 2):  # The blocks are placed 1 block width apart
@@ -62,7 +65,7 @@ class Game:
         for b in bullets:
             b.update()
         for b in blocks:
-            b.update(self)
+            self.score += b.update(self)
 
     def draw(self):
         pyxel.cls(0)
@@ -75,6 +78,7 @@ class Game:
             self.draw_play_scene()
         # elif self.scene == SCENE_GAMEOVER:
         #     self.draw_gameover_scene()
+        pyxel.text(60, 4, "SCORE {:5}".format(self.score), 7)
 
     def draw_title_scene(self):
         pyxel.text(10, 10, "KAREN Simulator: 2020 Edition", pyxel.frame_count % 16)
@@ -106,8 +110,8 @@ class Player:
     RECHARGE_TIME = 5
 
     def __init__(self):
-        self.x = 100  # Player starts at (100, 100)
-        self.y = 100
+        self.x = 80  # Player starts at (100, 100)
+        self.y = 60
         self.recharge = 0
         self.direction = 0
 
@@ -131,6 +135,9 @@ class Player:
                 self.direction = 3
         global bulletDirection
         bulletDirection = self.direction
+        global playerX, playerY
+        playerX = self.x
+        playerY = self.y
 
         if pyxel.btn(pyxel.KEY_SPACE) and self.recharge == 0:  # Player can only shoot when the recharge time is at 0
             bullets.append(Bullet(self.x, self.y, 0, -1))
@@ -176,7 +183,6 @@ class Bullet:
         if self.y < 0:
             bullets.remove(self)
 
-
     def draw(self):
         if self.direction == 0:
             pyxel.rect(self.x, self.y, 1, 1, pyxel.COLOR_WHITE)
@@ -197,6 +203,7 @@ class Block:
         self.y = y
         self.offset = int(random() * 60)
         self.alive = True
+        self.score = 0
 
     def update(self, game):
         self.y += 0.1  # Blocks fall down
@@ -213,12 +220,18 @@ class Block:
         if self.y + self.WIDTH >= Game.HEIGHT:
             game.lost()  # If a game hits the bottom, then you've lost!
 
+        if self.x + self.WIDTH > playerX > self.x - self.WIDTH \
+                and self.y + self.HEIGHT > playerY > self.y - self.HEIGHT:
+            game.lost()  # If a game hits the bottom, then you've lost!
+
         for b in bullets:
             if (self.x <= b.x <= self.x + self.WIDTH) and (self.y <= b.y <= self.y + self.HEIGHT):
                 bullets.remove(b)
                 blocks.remove(self)
+                self.score += 10
                 if len(blocks) == 0:
                     game.won()  # If all the blocks are destroyed, then you win the game!
+        return self.score
 
     def draw(self):
         pyxel.rect(self.x, self.y, self.WIDTH, self.HEIGHT, pyxel.COLOR_WHITE)
