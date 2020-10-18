@@ -1,14 +1,19 @@
+from random import random
+
 import pyxel
 
 SCENE_TITLE = 0
 SCENE_PLAY = 1
-SCENE_GAMEOVER = 2
+
+BLOCK_SPEED = 1.0
+bulletDirection = 0
 
 bullets = []
 blocks = []
 
 
 class Game:
+    # how big it is
     WIDTH = 160
     HEIGHT = 120
 
@@ -104,6 +109,7 @@ class Player:
         self.x = 100  # Player starts at (100, 100)
         self.y = 100
         self.recharge = 0
+        self.direction = 0
 
     def update(self):
         # Move depending on which keys the player moves
@@ -112,9 +118,19 @@ class Player:
         elif pyxel.btn(pyxel.KEY_RIGHT):
             self.x += 1
         elif pyxel.btn(pyxel.KEY_UP):
-            self.y -= 1
+            # rotates right (clockwise)
+            if 0 <= self.direction < 3:
+                self.direction += 1
+            else:
+                self.direction = 0
         elif pyxel.btn(pyxel.KEY_DOWN):
-            self.y += 1
+            # rotates left (anti-clockwise)
+            if 0 < self.direction <= 3:
+                self.direction -= 1
+            else:
+                self.direction = 3
+        global bulletDirection
+        bulletDirection = self.direction
 
         if pyxel.btn(pyxel.KEY_SPACE) and self.recharge == 0:  # Player can only shoot when the recharge time is at 0
             bullets.append(Bullet(self.x, self.y, 0, -1))
@@ -123,24 +139,53 @@ class Player:
 
     def draw(self):
         # Draw a triangle shape around the player's position
-        pyxel.tri(self.x, self.y, self.x - 2, self.y + 2, self.x + 2, self.y + 2, pyxel.COLOR_DARKBLUE)
+        # pyxel.tri(self.x, self.y, self.x - 2, self.y + 2, self.x + 2, self.y + 2, pyxel.COLOR_DARKBLUE)
+        if self.direction == 0:
+            pyxel.tri(self.x, self.y, self.x - 2, self.y + 2, self.x + 2, self.y + 2, pyxel.COLOR_DARKBLUE)
+        elif self.direction == 1:
+            pyxel.tri(self.x, self.y, self.x - 2, self.y - 2, self.x - 2, self.y + 2, pyxel.COLOR_DARKBLUE)
+        elif self.direction == 2:
+            pyxel.tri(self.x, self.y, self.x + 2, self.y - 2, self.x - 2, self.y - 2, pyxel.COLOR_DARKBLUE)
+        elif self.direction == 3:
+            pyxel.tri(self.x, self.y, self.x + 2, self.y - 2, self.x + 2, self.y + 2, pyxel.COLOR_DARKBLUE)
 
 
 class Bullet:
-    def __init__(self, x, y, velocity_x, velocity_y):
+
+    def __init__(self, x, y, width_x, height_y):
         self.x = x
         self.y = y
-        self.velocity_x = velocity_x
-        self.velocity_y = velocity_y
+        self.width_x = width_x
+        self.height_y = height_y
+        self.direction = bulletDirection
 
     def update(self):
-        self.x += self.velocity_x
-        self.y += self.velocity_y
+        if self.direction == 0:
+            # self.x += self.width_x
+            self.y += self.height_y
+        elif self.direction == 1:
+            self.x += self.width_x
+            # self.y += self.height_y
+        elif self.direction == 2:
+            # self.x += self.width_x
+            self.y -= self.height_y
+        elif self.direction == 3:
+            self.x -= self.width_x
+            # self.y += self.height_y
+
         if self.y < 0:
             bullets.remove(self)
 
+
     def draw(self):
-        pyxel.rect(self.x, self.y, 1, 1, pyxel.COLOR_WHITE)
+        if self.direction == 0:
+            pyxel.rect(self.x, self.y, 1, 1, pyxel.COLOR_WHITE)
+        if self.direction == 1:
+            pyxel.rect(self.x + 2, self.y, 1, 1, pyxel.COLOR_WHITE)
+        if self.direction == 2:
+            pyxel.rect(self.x, self.y + 2, 1, 1, pyxel.COLOR_WHITE)
+        if self.direction == 3:
+            pyxel.rect(self.x - 2, self.y, 1, 1, pyxel.COLOR_WHITE)
 
 
 class Block:
@@ -150,9 +195,20 @@ class Block:
     def __init__(self, x, y):
         self.x = x
         self.y = y
+        self.offset = int(random() * 60)
+        self.alive = True
 
     def update(self, game):
-        self.y += 0.2  # Blocks fall down
+        self.y += 0.1  # Blocks fall down
+        if (pyxel.frame_count + self.offset) % 60 < 30:
+            self.x += BLOCK_SPEED
+            # self.dir = 1
+        else:
+            self.x -= BLOCK_SPEED
+            # self.dir = -1
+
+        if self.y > pyxel.height - 1:
+            self.alive = False
 
         if self.y + self.WIDTH >= Game.HEIGHT:
             game.lost()  # If a game hits the bottom, then you've lost!
