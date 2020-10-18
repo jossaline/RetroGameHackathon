@@ -13,6 +13,9 @@ playerY = 0
 bullets = []
 blocks = []
 
+blockStart = False
+nearEmpty = False
+remember = False
 
 class Game:
     # game dimensions
@@ -50,6 +53,9 @@ class Game:
         self.player = Player()
         self.ended = False
         self.score = 0
+        global blockStart
+        blockStart = False
+
         bullets.clear()  # Remove any bullets that have been left behind
         blocks.clear()  # Remove any blocks that have been left behind
         for x in range(0, self.WIDTH, Block.WIDTH * 2):  # The blocks are placed 1 block width apart
@@ -67,6 +73,28 @@ class Game:
         for b in blocks:
             self.score += b.update(self)
 
+        repeat = range(0, self.WIDTH, Block.WIDTH * 2)
+
+        global blockStart
+        global nearEmpty
+        global remember
+        if nearEmpty:
+            if remember:
+                blockStart = True
+                nearEmpty = False
+                remember = False
+
+            if not remember:
+                blockStart = False
+                nearEmpty = False
+                remember = True
+
+        for x in repeat:  # The blocks are placed 1 block width apart
+            if len(repeat) < 20:
+                blocks.append(Block(x, 1))
+            else:
+                break
+
     def draw(self):
         pyxel.cls(0)
 
@@ -78,12 +106,16 @@ class Game:
             self.draw_play_scene()
         # elif self.scene == SCENE_GAMEOVER:
         #     self.draw_gameover_scene()
-        pyxel.text(60, 4, "SCORE {:5}".format(self.score), 7)
+        pyxel.text(60, 4, "SCORE {:5}".format(self.score), 8)
 
     def draw_title_scene(self):
-        pyxel.text(10, 10, "KAREN Simulator: 2020 Edition", pyxel.frame_count % 16)
-        pyxel.text(10, 20, "A Pyxel Shooter", pyxel.frame_count % 16)
-        pyxel.text(10, 30, "- PRESS ENTER -", 13)
+        pyxel.text(10, 20, "The Inevitable Heat Death", pyxel.frame_count % 16)
+        pyxel.text(10, 30, "of the Universe: A Pyxel Shooter", pyxel.frame_count % 16)
+        pyxel.text(10, 50, "- PRESS ENTER to meet your demise -", 8)
+        pyxel.text(10, 60, "How long can you survive?", 13)
+        pyxel.text(10, 80, "Controls - A or S to rotate", 13)
+        pyxel.text(10, 90, "Arrow keys = up, down, left, right", 13)
+        pyxel.text(10, 100, "Space to shoot", 13)
 
     def draw_play_scene(self):
         pyxel.cls(pyxel.COLOR_BLACK)  # Make the background black
@@ -121,13 +153,17 @@ class Player:
             self.x -= 1
         elif pyxel.btn(pyxel.KEY_RIGHT):
             self.x += 1
+        elif pyxel.btn(pyxel.KEY_DOWN):
+            self.y -= 1
         elif pyxel.btn(pyxel.KEY_UP):
+            self.y += 1
+        elif pyxel.btn(pyxel.KEY_S):
             # rotates right (clockwise)
             if 0 <= self.direction < 3:
                 self.direction += 1
             else:
                 self.direction = 0
-        elif pyxel.btn(pyxel.KEY_DOWN):
+        elif pyxel.btn(pyxel.KEY_A):
             # rotates left (anti-clockwise)
             if 0 < self.direction <= 3:
                 self.direction -= 1
@@ -206,6 +242,8 @@ class Block:
         self.score = 0
 
     def update(self, game):
+        if blockStart:
+            self.y -= 0.2  # Blocks rise up
         self.y += 0.1  # Blocks fall down
         if (pyxel.frame_count + self.offset) % 60 < 30:
             self.x += BLOCK_SPEED
@@ -229,6 +267,9 @@ class Block:
                 bullets.remove(b)
                 blocks.remove(self)
                 self.score += 10
+                if len(blocks) == 1:
+                    global nearEmpty
+                    nearEmpty = True
                 if len(blocks) == 0:
                     game.won()  # If all the blocks are destroyed, then you win the game!
         return self.score

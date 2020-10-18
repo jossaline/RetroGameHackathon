@@ -1,5 +1,6 @@
 # Retro Hackathon Template
 
+Rachael Millard and Jossaline Tanasaldy - Monash
 This is a Python template for the [DSC Retro Game Hackathon](https://github.com/Developer-Student-Club-UoA/RetroGameHackathon).
 If you wish to use this template, copy this template into your forked github repository.
 
