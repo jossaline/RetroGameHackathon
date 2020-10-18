@@ -17,6 +17,7 @@ blockStart = False
 nearEmpty = False
 remember = False
 
+
 class Game:
     # game dimensions
     WIDTH = 160
@@ -115,7 +116,7 @@ class Game:
         pyxel.text(10, 60, "How long can you survive?", 13)
         pyxel.text(10, 80, "Controls - A or S to rotate", 13)
         pyxel.text(10, 90, "Arrow keys = up, down, left, right", 13)
-        pyxel.text(10, 100, "Space to shoot", 13)
+        pyxel.text(10, 100, "Space = shoot or lay bombs horizontal", 13)
 
     def draw_play_scene(self):
         pyxel.cls(pyxel.COLOR_BLACK)  # Make the background black
@@ -153,9 +154,9 @@ class Player:
             self.x -= 1
         elif pyxel.btn(pyxel.KEY_RIGHT):
             self.x += 1
-        elif pyxel.btn(pyxel.KEY_DOWN):
-            self.y -= 1
         elif pyxel.btn(pyxel.KEY_UP):
+            self.y -= 1
+        elif pyxel.btn(pyxel.KEY_DOWN):
             self.y += 1
         elif pyxel.btn(pyxel.KEY_S):
             # rotates right (clockwise)
